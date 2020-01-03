@@ -26,21 +26,20 @@ def runAlg1(folderTB):
     #busca la carpeta snapshot y llamo a runneuralnet --> los resultados los huelco al diccionario ais (clave,valor) como {etiqueta,cantidad de objetos detectados}
     for root, dirs, files in os.walk(folderTB):
         #salteando el primer directorio
-        if root!=folderTB:
-            #print(root,"estas son root")
-            #print(files, "estas son listas de files")
-            image=""
+        if root != folderTB:
+            # print(root,"estas son root")
+            # print(files, "estas son listas de files")
+            image = ""
             try:
                 for x in files:
-                    if x.find('clasificate')>-1:
-                        image=x
+                    if x.find('clasificate') > -1:
+                        image = x
                         break
-                if image=="":
+                if image == "":
                     raise FileNotFoundError("el archivo clasificate no se encuentra")
+                runNeuralNet(root + "//" + image, "holi", 8)
             except FileNotFoundError:
-                print("\nLA IMAGEN A CLASIFICAR NO SE ENCUENTRA DENTRO DE "+root+"\n")
-                return 0
-            runNeuralNet(root+"//"+image,"holi",8)
+                print("LA IMAGEN A CLASIFICAR NO SE ENCUENTRA DENTRO DE " + root)
 
 #Toma la salida de la yolo densa, para eso se pasa el comando con todfos sus parametros
 videoMp4='D://Videos//usina//fanless2//2018-09-02//2018-09-02_15-01-07.mp4'
