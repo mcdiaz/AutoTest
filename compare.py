@@ -25,11 +25,28 @@ yolo=ContainerRN()
 yolo.dict=dict([('animal',0),('bus',0),('car',0),('cyclist',0),('human',0),('other',0),('pickup',0),('truck',0),('van',0)])
 LABELS={'animal','bus','car','cyclist','human','other','pickup','truck','van'}
 
+labelsObj="CAR;0.8|BUS;0.1|TRUCK;0.1"
+
+def readClasificate(labelsObj):
+    listLabels=labelsObj.split("|")
+    valuePrecission=0.0
+    originalLabel=""
+    print(listLabels)
+    for i in range(0,len(listLabels),1):
+        listLabels[i]=listLabels[i].split(";")
+        if( valuePrecission < float(listLabels[i][1]) ):
+            valuePrecission=float(listLabels[i][1])
+            originalLabel=listLabels[i][0]
+    print(originalLabel)
+    ais.dict[originalLabel.lower()]+=1
+    print(listLabels)
+
 def runNeuralNet(urlFile, urlScriptAIS, threshold):
     print(urlFile)
-#folderTrackedBlob posee la ubicacion a la carpeta que posee cada carpeta para cada TB, que cada una de ellas contiene 5 archivos
+    readClasificate(labelsObj)
 
-folderTB='F://YOLO//prueba//'
+#folderTrackedBlob posee la ubicacion a la carpeta que posee cada carpeta para cada TB, que cada una de ellas contiene 5 archivos
+#folderTB='F://YOLO//prueba//'
 def runAlg1(folderTB):
     #itera por todas las carpetitas del directorio
     #busca la carpeta snapshot y llamo a runneuralnet --> los resultados los huelco al diccionario ais (clave,valor) como {etiqueta,cantidad de objetos detectados}
@@ -53,8 +70,8 @@ def runAlg1(folderTB):
     print(ais.amount)
 
 #Toma la salida de la yolo densa, para eso se pasa el comando con todfos sus parametros
-videoMp4='D://Videos//usina//fanless2//2018-09-02//2018-09-02_15-01-07.mp4'
-backupOutputDensa='d://temp//YoloUsina15-01-07//'
+#videoMp4='D://Videos//usina//fanless2//2018-09-02//2018-09-02_15-01-07.mp4'
+#backupOutputDensa='d://temp//YoloUsina15-01-07//'
 
 def checkLabel(objectLabel, value):
     if objectLabel in LABELS:
@@ -87,40 +104,41 @@ def getLabelDicYolo(label):
                     return label
 
 def loadDicYOLO(folderYOLO):
-    with open(folderYOLO) as csvYOLO:
-        readYOLO=csv.reader(csvYOLO, delimiter=";")
-        for row in readYOLO:
-            #lee por fila las lineas del file csv que contiene la informacion del video procesado por la red densa
-            cant1=int(yolo.dict.get(getLabelDicYolo(row[6])) or 0)#por NonType del diccionario
-            checkLabel(getLabelDicYolo(row[6]),cant1)
-            if 8 < len(row):
-                cant2 = int(yolo.dict.get(getLabelDicYolo(row[8])) or 0)
-                checkLabel(getLabelDicYolo(row[8]),cant2)
-                if 10 < len(row):
-                    cant3 = int(yolo.dict.get(getLabelDicYolo(row[10])) or 0)
-                    checkLabel(getLabelDicYolo(row[10]),cant3)
-                if 12 < len(row):
-                    cant4 = int(yolo.dict.get(getLabelDicYolo(row[12])) or 0)
-                    checkLabel(getLabelDicYolo(row[12]),cant4)
+    try:
+        with open(folderYOLO) as csvYOLO:
+            readYOLO=csv.reader(csvYOLO, delimiter=";")
+            for row in readYOLO:
+                #lee por fila las lineas del file csv que contiene la informacion del video procesado por la red densa
+                labelobj=getLabelDicYolo(row[6].lower())
+                cant1=int(yolo.dict.get(labelobj) or 0)#por NonType del diccionario
+                checkLabel(labelobj,cant1)
+                if 8 < len(row):
+                    getLabelDicYolo(row[8].lower())
+                    cant2 = int(yolo.dict.get(labelobj) or 0)
+                    checkLabel(labelobj,cant2)
+                    if 10 < len(row):
+                        labelobj=getLabelDicYolo(row[10].lower())
+                        cant3 = int(yolo.dict.get(labelobj) or 0)
+                        checkLabel(labelobj,cant3)
+                        if 12 < len(row):
+                            labelobj=getLabelDicYolo(row[12].lower())
+                            cant4 = int(yolo.dict.get(labelobj) or 0)
+                            checkLabel(labelobj,cant4)
+    except FileNotFoundError:
+        print("No se encuentra el archivo csv generado por la red yolo")
 
-def runAlg2(videoMp4):
+def runAlg2(videoMp4,backupOutputDensa):
     #el algoritmo debe ejecutar la red YOLO (densa) y obtener los resultados y completar el diccionario
     #args:
     #videoMp4 el video en formato mp4
     #p=subprocess.Popen(['D:\YOLO_CL\Yolo_genTrainImages.exe', 'detect', 'D://YOLO_CL//cfg//yolov3.cfg', 'D://YOLO_CL//cfg//yolov3.weights', '-v',  videoMp4, '-o', backupOutputDensa,'-i','0','-M','0'])
     yolo.initTime=time.time()
     #p.communicate()
-    """
-    b=subprocess.Popen(['C://Program Files//Git//git-bash.exe','bash','/F/yolo/dat.sh', '/D/Temp/YoloUsina15-01-07/videoClassifications.csv', '/D/Temp/YoloUsina15-01-07/videoClassifications.txt', '/D/yolo_cl/data/cocoNames.txt', '/D/Temp/YoloUsina15-01-07/'])
-    """
     files=backupOutputDensa+"videoClassifications.csv"
-    file = open(backupOutputDensa+"videoClassifications.csv","r")
-    #print(file.read())
     loadDicYOLO(files)
     #Calcula el tiempo final de ejecucion de la red densa
     yolo.finalTime=time.time()-yolo.initTime
     print(yolo.finalTime)
-#runAlg2(videoMp4)
 
 def printValues():
     print("{4}{0:10s}{4}{4}{2:^10s}{4}{4}{3:^10s}{4}".format(" ","\n","YOLO","AIS","|"))
@@ -135,9 +153,12 @@ def printValues():
     print("{0}{1:^10s}{0}{0}{1:^10s}{0}{0}{1:^10s}{0}".format("|", "_"))
     print("{0}{1:^10s}{0}{0}{2:^10d}{0}{0}{3:^10d}{0}".format("|", "Total", yolo.amount, ais.amount))
     print("{0}{1:^10s}{0}{0}{2:^10f}{0}{0}{3:^10f}{0}".format("|", "Tiempo", yolo.finalTime, ais.finalTime))
-#printValues()
 
 if __name__ == "__main__":
+    print(sys.argv[0],sys.argv[1],sys.argv[2])
+    folderTB=sys.argv[1] #ubicacion de todos los tb
     runAlg1(folderTB)
-    runAlg2(videoMp4)
+    videoMp4=sys.argv[2] #ubicacion del video a procesar por yolo
+    backupOutputDensa=sys.argv[3] #ubicacion de donde se guarda los frames y el csv de la clasificacion por la red densa
+    runAlg2(videoMp4, backupOutputDensa)
     printValues()
